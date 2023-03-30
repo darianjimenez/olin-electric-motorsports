@@ -281,10 +281,11 @@ def cc_firmware(name, **kwargs):
     btldr = None
     if kwargs.get("btldr"):
         btldr = kwargs.pop("btldr")
+        btldr_ecu_name = btldr.removeprefix("//projects/btldr:").removesuffix("_btldr")
         linkopts.append("-flto")
         linkopts.append("-Wl,--gc-sections")
         data.append(btldr + ".hex")
-        defines.append("BTLDR_ID=" + ECUS[name]["btldr_id"])
+        defines.append("BTLDR_ID=" + ECUS[btldr_ecu_name]["btldr_id"])
 
     cc_binary(
         name = "{}.elf".format(name),
