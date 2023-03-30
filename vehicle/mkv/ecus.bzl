@@ -13,7 +13,7 @@ ECUS = {
     },
     "bspd": {
         "btldr_id": "0x718",
-     },
+    },
     "lvbms": {
         "btldr_id": "0x720",
     },
