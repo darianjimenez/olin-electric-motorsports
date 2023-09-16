@@ -15,6 +15,7 @@ typedef enum {
     ADC8,
     ADC9,
     ADC10,
+    ADC_COUNT,
 } adc_pin_e;
 
 /*
