@@ -1,4 +1,4 @@
-#include <libopencm3/stm32/common.h>
+#include <libopencm3/cm3/common.h>
 #include <libopencm3/stm32/f1/gpio.h>
 #include <libopencm3/stm32/f1/memorymap.h>
 #include <libopencm3/stm32/f1/rcc.h>
@@ -8,10 +8,10 @@ int main(void) {
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
                   GPIO5);
     while (1) {
-        for (int i = 0; i < 500000; i++) {
-            __asm__("nop");
-        }
+        // for (int i = 0; i < 500000; i++) {
+        //     __asm__("nop");
+        // }
 
-        gpio_toggle(GPIOA, GPIO5);
+        gpio_set(GPIOA, GPIO5);
     }
 }

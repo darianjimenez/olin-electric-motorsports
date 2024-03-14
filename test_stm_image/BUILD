@@ -10,6 +10,6 @@ cc_arm_firmware(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/libopencm3:export",
+        "//third_party/libopencm3:stm32f1xx_hal",
     ],
 )
