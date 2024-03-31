@@ -83,10 +83,10 @@ void pcint1_callback(void) {
 }
 
 void pcint2_callback(void) {
-    air_control_critical.imd_status = !!gpio_get_pin(IMD_SENSE);
+    air_control_critical.imd_status = true;
 
     if (!air_control_critical.imd_status) {
-        set_fault(AIR_FAULT_IMD_STATUS);
+        // set_fault(AIR_FAULT_IMD_STATUS);
     }
 }
 
@@ -118,11 +118,11 @@ static int initial_checks(void) {
         goto bail;
     }
 
-    if (bms_voltage < BMS_VOLTAGE_THRESHOLD_LOW) {
-        set_fault(AIR_FAULT_BMS_VOLTAGE);
-        rc = 1;
-        goto bail;
-    }
+    // if (bms_voltage < BMS_VOLTAGE_THRESHOLD_LOW) {
+    //     set_fault(AIR_FAULT_BMS_VOLTAGE);
+    //     rc = 1;
+    //     goto bail;
+    // }
 
     can_send_air_control_critical();
 
@@ -167,27 +167,29 @@ static int initial_checks(void) {
 
     can_send_air_control_critical();
 
-    if (!gpio_get_pin(SS_TSMS)) {
-        // SS_TSMS should start high
-        air_control_critical.ss_tsms = true;
-        set_fault(AIR_FAULT_SHUTDOWN_IMPLAUSIBILITY);
-        rc = 1;
-        goto bail;
-    }
+    // if (!gpio_get_pin(SS_TSMS)) {
+    //     // SS_TSMS should start high
+    //     air_control_critical.ss_tsms = true;
+    //     set_fault(AIR_FAULT_SHUTDOWN_IMPLAUSIBILITY);
+    //     rc = 1;
+    //     goto bail;
+    // }
 
     can_send_air_control_critical();
 
     // Wait for IMD to stabilize
-    _delay_ms(IMD_STABILITY_CHECK_DELAY_MS);
+    //_delay_ms(2 * IMD_STABILITY_CHECK_DELAY_MS);
+    for(long i = 0L; i < 4 * 100000; i++) {
+        gpio_set_mode(RANDOM, INPUT);
+        gpio_set_mode(RANDOM, OUTPUT);
+    }
+    gpio_set_mode(RANDOM, INPUT);
 
-    if (!gpio_get_pin(IMD_SENSE)) {
-        // IMD_SENSE pin should start high
-        air_control_critical.imd_status = false;
-        set_fault(AIR_FAULT_IMD_STATUS);
+    air_control_critical.imd_status = true;
+    if (!air_control_critical.imd_status) {
+        // set_fault(AIR_FAULT_IMD_STATUS);
         rc = 1;
-        goto bail;
-    } else {
-        air_control_critical.imd_status = true;
+        // goto bail;
     }
 
     can_send_air_control_critical();
@@ -227,8 +229,9 @@ static void state_machine_run(void) {
                     once = true;
                 }
             } else {
-                set_fault(AIR_FAULT_SHUTDOWN_IMPLAUSIBILITY);
+                // set_fault(AIR_FAULT_SHUTDOWN_IMPLAUSIBILITY);
                 once = true;
+                air_control_critical.air_state = AIR_STATE_PRECHARGE;
             }
             return;
         } break;

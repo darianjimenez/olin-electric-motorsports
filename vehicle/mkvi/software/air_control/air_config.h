@@ -10,6 +10,7 @@ gpio_t PRECHARGE_CTL = PB2;
 gpio_t AIR_N_LSD = PC6;
 
 // Inputs
+gpio_t RANDOM = PD1;
 gpio_t SS_TSMS = PB3;
 gpio_t SS_IMD_LATCH = PB4;
 gpio_t SS_MPC = PB5;
