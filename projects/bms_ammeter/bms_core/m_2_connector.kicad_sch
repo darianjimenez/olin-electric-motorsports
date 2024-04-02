@@ -885,7 +885,7 @@
   (symbol (lib_id "power:GND") (at 204.47 55.88 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 5b708dae-4b2a-4362-8d9c-deeac4629921)
-    (property "Reference" "#PWR?" (at 204.47 62.23 0)
+    (property "Reference" "#PWR0150" (at 204.47 62.23 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 204.47 60.96 90)
@@ -901,7 +901,7 @@
     (instances
       (project "bms_core"
         (path "/19b2a9f9-0be6-4bde-80c5-cbc5126d55d5/8857e594-f9a2-447b-85c9-7fce31d1bf44"
-          (reference "#PWR?") (unit 1)
+          (reference "#PWR0150") (unit 1)
         )
       )
     )
@@ -910,7 +910,7 @@
   (symbol (lib_id "power:+5V") (at 132.08 40.64 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 8382d4f6-f9e6-40ee-8cd2-e57d8db15f49)
-    (property "Reference" "#PWR?" (at 132.08 44.45 0)
+    (property "Reference" "#PWR0151" (at 132.08 44.45 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "+5V" (at 132.08 36.83 0)
@@ -926,7 +926,7 @@
     (instances
       (project "bms_core"
         (path "/19b2a9f9-0be6-4bde-80c5-cbc5126d55d5/8857e594-f9a2-447b-85c9-7fce31d1bf44"
-          (reference "#PWR?") (unit 1)
+          (reference "#PWR0151") (unit 1)
         )
       )
     )
