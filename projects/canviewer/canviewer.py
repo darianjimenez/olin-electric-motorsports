@@ -67,7 +67,7 @@ class VoltageReading:
     adc: int
 
     def __str__(self):
-        cell_number = str((int(self.cell) + 6 * self.adc))
+        cell_number = str((int(self.cell) * 3 + self.adc))
         if len(cell_number) == 1:
           cell_number = f"0{cell_number}"
         return f"{self.ic}:{cell_number}"
