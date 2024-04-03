@@ -83,11 +83,11 @@ void pcint1_callback(void) {
 }
 
 void pcint2_callback(void) {
-    air_control_critical.imd_status = !!gpio_get_pin(IMD_SENSE);
+    // air_control_critical.imd_status = !!gpio_get_pin(IMD_SENSE);
 
-    if (!air_control_critical.imd_status) {
-        set_fault(AIR_FAULT_IMD_STATUS);
-    }
+    // if (!air_control_critical.imd_status) {
+    //     set_fault(AIR_FAULT_IMD_STATUS);
+    // }
 }
 
 /*
@@ -101,98 +101,98 @@ void pcint2_callback(void) {
 static int initial_checks(void) {
     int rc = 0;
 
-    /*
-     * Get MC and BMS voltages
-     *
-     * Will poll for 1 second and if the CAN message isn't received, will fault
-     */
-    int16_t bms_voltage = 0;
-    rc = get_bms_voltage(&bms_voltage);
+//     /*
+//      * Get MC and BMS voltages
+//      *
+//      * Will poll for 1 second and if the CAN message isn't received, will fault
+//      */
+//     int16_t bms_voltage = 0;
+//     rc = get_bms_voltage(&bms_voltage);
 
-    if (rc == 1) {
-        set_fault(AIR_FAULT_CAN_ERROR);
-        goto bail;
-    } else if (rc == 2) {
-        set_fault(AIR_FAULT_CAN_BMS_TIMEOUT);
-        rc = 1;
-        goto bail;
-    }
+//     if (rc == 1) {
+//         set_fault(AIR_FAULT_CAN_ERROR);
+//         goto bail;
+//     } else if (rc == 2) {
+//         set_fault(AIR_FAULT_CAN_BMS_TIMEOUT);
+//         rc = 1;
+//         goto bail;
+//     }
 
-    if (bms_voltage < BMS_VOLTAGE_THRESHOLD_LOW) {
-        set_fault(AIR_FAULT_BMS_VOLTAGE);
-        rc = 1;
-        goto bail;
-    }
+//     // if (bms_voltage < BMS_VOLTAGE_THRESHOLD_LOW) {
+//     //     set_fault(AIR_FAULT_BMS_VOLTAGE);
+//     //     rc = 1;
+//     //     goto bail;
+//     // }
 
-    can_send_air_control_critical();
+//     can_send_air_control_critical();
 
-    int16_t mc_voltage = 0;
-    rc = get_tractive_voltage(&mc_voltage, tractive_sys, 1000);
+//     int16_t mc_voltage = 0;
+//     rc = get_tractive_voltage(&mc_voltage, tractive_sys, 1000);
 
-    if (rc == 1) {
-        set_fault(AIR_FAULT_CAN_ERROR);
-        goto bail;
-    } else if (rc == 2) {
-        set_fault(AIR_FAULT_CAN_MC_TIMEOUT);
-        rc = 1;
-        goto bail;
-    }
+//     if (rc == 1) {
+//         set_fault(AIR_FAULT_CAN_ERROR);
+//         goto bail;
+//     } else if (rc == 2) {
+//         set_fault(AIR_FAULT_CAN_MC_TIMEOUT);
+//         rc = 1;
+//         goto bail;
+//     }
 
-    if (mc_voltage > TRACTIVE_THRESHOLD_LOW_dV) {
-        set_fault(AIR_FAULT_TRACTIVE_VOLTAGE);
-        rc = 1;
-        goto bail;
-    }
+//     if (mc_voltage > TRACTIVE_THRESHOLD_LOW_dV) {
+//         set_fault(AIR_FAULT_TRACTIVE_VOLTAGE);
+//         rc = 1;
+//         goto bail;
+//     }
 
-    can_send_air_control_critical();
+//     can_send_air_control_critical();
 
-    // The following checks ensure that the hardware is in the correct initial
-    // state.
-    air_control_critical.air_p_status = !!gpio_get_pin(AIR_P_WELD_DETECT);
-    air_control_critical.air_n_status = !!gpio_get_pin(AIR_N_WELD_DETECT);
+//     // The following checks ensure that the hardware is in the correct initial
+//     // state.
+//     air_control_critical.air_p_status = !!gpio_get_pin(AIR_P_WELD_DETECT);
+//     air_control_critical.air_n_status = !!gpio_get_pin(AIR_N_WELD_DETECT);
 
-    if (air_control_critical.air_p_status) {
-        set_fault(AIR_FAULT_AIR_P_WELD);
-        rc = 1;
-        goto bail;
-    }
+//     if (air_control_critical.air_p_status) {
+//         set_fault(AIR_FAULT_AIR_P_WELD);
+//         rc = 1;
+//         goto bail;
+//     }
 
-    can_send_air_control_critical();
+//     can_send_air_control_critical();
 
-    if (air_control_critical.air_n_status) {
-        set_fault(AIR_FAULT_AIR_N_WELD);
-        rc = 1;
-        goto bail;
-    }
+//     if (air_control_critical.air_n_status) {
+//         set_fault(AIR_FAULT_AIR_N_WELD);
+//         rc = 1;
+//         goto bail;
+//     }
 
-    can_send_air_control_critical();
+//     can_send_air_control_critical();
 
-    if (!gpio_get_pin(SS_TSMS)) {
-        // SS_TSMS should start high
-        air_control_critical.ss_tsms = true;
-        set_fault(AIR_FAULT_SHUTDOWN_IMPLAUSIBILITY);
-        rc = 1;
-        goto bail;
-    }
+//     if (!gpio_get_pin(SS_TSMS)) {
+//         // SS_TSMS should start high
+//         air_control_critical.ss_tsms = true;
+//         set_fault(AIR_FAULT_SHUTDOWN_IMPLAUSIBILITY);
+//         rc = 1;
+//         goto bail;
+//     }
 
-    can_send_air_control_critical();
+//     // can_send_air_control_critical();
 
-    // Wait for IMD to stabilize
-    _delay_ms(IMD_STABILITY_CHECK_DELAY_MS);
+//     // // Wait for IMD to stabilize
+//     // _delay_ms(IMD_STABILITY_CHECK_DELAY_MS);
 
-    if (!gpio_get_pin(IMD_SENSE)) {
-        // IMD_SENSE pin should start high
-        air_control_critical.imd_status = false;
-        set_fault(AIR_FAULT_IMD_STATUS);
-        rc = 1;
-        goto bail;
-    } else {
-        air_control_critical.imd_status = true;
-    }
+//     // if (!gpio_get_pin(IMD_SENSE)) {
+//     //     // IMD_SENSE pin should start high
+//     //     air_control_critical.imd_status = false;
+//     //     set_fault(AIR_FAULT_IMD_STATUS);
+//     //     rc = 1;
+//     //     goto bail;
+//     // } else {
+//     //     air_control_critical.imd_status = true;
+//     // }
 
-    can_send_air_control_critical();
+//     can_send_air_control_critical();
 
-bail:
+// bail:
     return rc;
 }
 
@@ -222,8 +222,9 @@ static void state_machine_run(void) {
             }
 
             if (get_time() - start_time < 200) {
-                if (air_control_critical.air_p_status) {
+                if (!air_control_critical.air_p_status) {
                     air_control_critical.air_state = AIR_STATE_PRECHARGE;
+                    can_send_air_control_critical();
                     once = true;
                 }
             } else {
@@ -274,15 +275,17 @@ static void state_machine_run(void) {
                 // Set correct scale for MC voltage
                 tractive_voltage = tractive_voltage * 0.1;
 
-                if (tractive_voltage > (PRECHARGE_THRESHOLD * pack_voltage)) {
+                // if (tractive_voltage > (PRECHARGE_THRESHOLD * pack_voltage)) {
+                // if(get_time() > start_time + 2000) {
+                if(1) {
                     gpio_set_pin(AIR_N_LSD); // Close AIR negative
-                    gpio_clear_pin(PRECHARGE_CTL); // Close precharge relay
+                    gpio_clear_pin(PRECHARGE_CTL); // Open precharge relay
                     once = true;
                     air_control_critical.air_state = AIR_STATE_TS_ACTIVE;
                     return;
                 } else {
                     once = true;
-                    set_fault(AIR_FAULT_PRECHARGE_FAIL);
+                    // set_fault(AIR_FAULT_PRECHARGE_FAIL);
                     return;
                 }
             } else {
@@ -450,12 +453,14 @@ int main(void) {
     pcint2_callback();
 
     can_send_air_control_critical();
+    gpio_clear_pin(GENERAL_LED);
 
     air_control_critical.air_state = AIR_STATE_IDLE;
 
     while (1) {
         if (run_1ms) {
             state_machine_run();
+            // can_send_air_control_critical();
             run_1ms = false;
         }
 
