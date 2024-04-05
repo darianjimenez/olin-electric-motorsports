@@ -756,7 +756,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 1abb8f2d-1384-4818-91ec-7e08707d2b3d)
   )
-  (label "SCK_HV" (at 105.41 91.44 0) (fields_autoplaced)
+  (label "SCLK_HV" (at 105.41 91.44 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 22adbe2c-511d-43f9-8034-2c4fd638d336)
   )
@@ -1528,5 +1528,9 @@
         )
       )
     )
+  )
+
+  (sheet_instances
+    (path "/" (page "1"))
   )
 )
