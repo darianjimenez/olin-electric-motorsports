@@ -106,25 +106,25 @@ static int initial_checks(void) {
      *
      * Will poll for 1 second and if the CAN message isn't received, will fault
      */
-    // int16_t bms_voltage = 0;
-    // rc = get_bms_voltage(&bms_voltage);
+    int16_t bms_voltage = 0;
+    rc = get_bms_voltage(&bms_voltage);
 
-    // if (rc == 1) {
-    //     set_fault(AIR_FAULT_CAN_ERROR);
-    //     goto bail;
-    // } else if (rc == 2) {
-    //     set_fault(AIR_FAULT_CAN_BMS_TIMEOUT);
-    //     rc = 1;
-    //     goto bail;
-    // }
+    if (rc == 1) {
+        set_fault(AIR_FAULT_CAN_ERROR);
+        goto bail;
+    } else if (rc == 2) {
+        set_fault(AIR_FAULT_CAN_BMS_TIMEOUT);
+        rc = 1;
+        goto bail;
+    }
 
-    // if (bms_voltage < BMS_VOLTAGE_THRESHOLD_LOW) {
-    //     set_fault(AIR_FAULT_BMS_VOLTAGE);
-    //     rc = 1;
-    //     goto bail;
-    // }
+    if (bms_voltage < BMS_VOLTAGE_THRESHOLD_LOW) {
+        set_fault(AIR_FAULT_BMS_VOLTAGE);
+        rc = 1;
+        goto bail;
+    }
 
-    // can_send_air_control_critical();
+    can_send_air_control_critical();
 
     int16_t mc_voltage = 0;
     rc = get_tractive_voltage(&mc_voltage, tractive_sys, 1000);
