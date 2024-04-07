@@ -6,6 +6,9 @@
 #include "libs/timer/api.h"
 
 #include <avr/interrupt.h>
+#include "utils/timer.h"
+#include "utils/utils.h"
+#include <util/delay.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,6 +16,7 @@
 #include "projects/btldr/btldr_lib.h"
 #include "projects/btldr/git_sha.h"
 #include "projects/btldr/libs/image/api.h"
+
 
 //Required for btldr
 image_hdr_t image_hdr __attribute__((section(".image_hdr"))) = {
@@ -48,10 +52,13 @@ void update_LEDs(void) {
         }
 
         // Update 5kW LED on the PCB
-        if (bspd.bspd_5kw  == true) {
-            gpio_set_pin(MOTOR_5KW_LED);
+        if (bspd.bspd_5kw == true) {
+            gpio_set_pin(BRAKE_LL_LED);
         } else {
-            gpio_clear_pin(MOTOR_5KW_LED);
+            gpio_clear_pin(BRAKE_LL_LED);
+        //     gpio_set_pin(MOTOR_5KW_LED);
+        // } else {
+        //     gpio_clear_pin(MOTOR_5KW_LED);
         }
 
         // Update Shutdown LED on the PCB
@@ -107,13 +114,18 @@ int main(void) {
         // BLTDR loop poll function
         updater_loop();
 
-        if (send_can) {
-            bspd.brake_pressure = adc_read(BRAKE_PRESSURE_SENSE);
-            can_send_bspd();
-            send_can = false;
-        }
-        
+        // if (send_can) {
+        //     bspd.brake_pressure = adc_read(BRAKE_PRESSURE_SENSE);
+        //     can_send_bspd();
+        //     send_can = false;
+        // }
+
+        _delay_ms(1000);
+        gpio_set_pin(BRAKE_LL_LED);
+        _delay_ms(1000);
+        gpio_clear_pin(BRAKE_LL_LED);
+
         // Check whether an LED needs updating, and if so, change its state
-        update_LEDs();
+        // update_LEDs();
     }
 }
