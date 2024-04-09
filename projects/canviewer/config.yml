@@ -25,6 +25,7 @@ min_temperature:
   processing_function: convertVtoT
 D1_DC_Bus_Voltage:
 Torque_Command:
+start_button_state:
 ---
 # Vehicle States (state and fault)
 air_control_critical:
