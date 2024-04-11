@@ -392,7 +392,7 @@ int main(void) {
     can_init_air_control();
     timer_init(&timer0_cfg);
     timer_init(&timer1_cfg);
-    updater_init(BTLDR_ID, 5);
+    // updater_init(BTLDR_ID, 5);
 
     gpio_set_mode(PRECHARGE_CTL, OUTPUT);
     gpio_set_mode(AIR_N_LSD, OUTPUT);
@@ -464,10 +464,10 @@ int main(void) {
             run_1ms = false;
         }
 
-        // Updates can only occur when the AIR control state machine is in IDLE
-        if (air_control_critical.air_state == AIR_STATE_IDLE) {
-            updater_loop();
-        }
+        // // Updates can only occur when the AIR control state machine is in IDLE
+        // if (air_control_critical.air_state == AIR_STATE_IDLE) {
+        //     updater_loop();
+        // }
 
         if (send_can) {
             can_send_air_control_critical();
@@ -480,7 +480,7 @@ fault:
 
     while (1) {
         // Allow updates in the event of a fault
-        updater_loop();
+        // updater_loop();
 
         /*
          * Continue senging CAN messages
