@@ -2,6 +2,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <util/delay.h>
+#include <util/atomic.h>
+#include <avr/io.h>
+#include "libs/can/mob.h"
 
 #include "libs/gpio/api.h"
 #include "libs/timer/api.h"
@@ -33,8 +36,91 @@ void timer0_isr(void) {
     send_can = true;
 }
 
+static enum can_id_mode_e id_mode = ID_MODE_STANDARD;
+
+static inline void mob_configure_alt(uint32_t id, uint32_t mask, uint8_t dlc) {
+    switch (id_mode) {
+        case ID_MODE_STANDARD: {
+            CANIDT1 = id >> 3;
+            CANIDT2 = id << 5;
+            CANIDT3 = 0;
+            CANIDT4 = 0;
+            CANIDM1 = mask >> 3;
+            CANIDM2 = mask << 5;
+            CANIDM3 = 0;
+            CANIDM4 = (1 << RTRMSK) | (1 << IDEMSK);
+            CANCDMOB &= ~(1 << IDE);
+            CANCDMOB |= ((dlc & 0xF) << DLC0);
+        } break;
+        case ID_MODE_EXTENDED: {
+            CANIDT1 = id >> 21;
+            CANIDT2 = id >> 13;
+            CANIDT3 = id >> 5;
+            CANIDT4 = id << 3;
+            CANIDM1 = mask >> 21;
+            CANIDM2 = mask >> 13;
+            CANIDM3 = mask >> 5;
+            CANIDM4 = (mask << 3) | (1 << RTRMSK) | (1 << IDEMSK);
+            CANCDMOB |= (1 << IDE) | ((dlc & 0xF) << DLC0);
+        } break;
+    }
+}
+
+int can_send_alt(can_frame_t* frame) {
+    PORTB |= 1;
+    while (CANGSTA & (1 << TXBSY))
+        ;
+
+    select_mob(frame->mob);
+    mob_reset();
+
+    mob_configure_alt(frame->id, 0, frame->dlc);
+
+    // Set the message
+    for (uint8_t i = 0; i < frame->dlc; i++) {
+        mob_write_data(frame->data[i]);
+    }
+
+    mob_enable_tx();
+
+    // bool once;
+    // Wait for TX to finish
+    bool once = true;
+    while (!(CANSTMOB & (1 << TXOK)))
+        // gpio_set_pin(GENERAL_LED);
+        if (once) {
+          start_time = get_time();
+          once = false;
+        }
+        if (get_time() - start_time > 1000) {
+          return 1;
+        }
+    CANSTMOB &= ~(1 << TXOK);
+
+    // gpio_clear_pin(GENERAL_LED);
+    return 0;
+}
+
+void  can_send_air_control_critical_alt(void) {
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        // We can be sure here that the CAN data struct won't change here
+
+        can_tools_air_control_critical_pack(
+            air_control_critical_data,
+            // We can safely discard the volatile qualifier because we are in an
+            // ATOMIC block, so the value will not be changed in an ISR
+            (const struct can_tools_air_control_critical_t*) &air_control_critical,
+            4
+        );
+    }
+    if (can_send_alt(&air_control_critical_msg)) {
+      can_init_air_control();
+      gpio_toggle_pin(GENERAL_LED);
+    }
+}
+
 static void set_fault(enum air_fault_e the_fault) {
-    gpio_set_pin(FAULT_LED);
+    // gpio_set_pin(FAULT_LED);
 
     if (air_control_critical.air_fault == AIR_FAULT_NONE) {
         // Only update fault state for the first fault to occur
@@ -124,7 +210,7 @@ static int initial_checks(void) {
         goto bail;
     }
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
 
     int16_t mc_voltage = 0;
     rc = get_tractive_voltage(&mc_voltage, tractive_sys, 1000);
@@ -144,7 +230,7 @@ static int initial_checks(void) {
         goto bail;
     }
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
 
     // The following checks ensure that the hardware is in the correct initial
     // state.
@@ -157,7 +243,7 @@ static int initial_checks(void) {
         goto bail;
     }
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
 
     if (air_control_critical.air_n_status) {
         set_fault(AIR_FAULT_AIR_N_WELD);
@@ -165,7 +251,7 @@ static int initial_checks(void) {
         goto bail;
     }
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
 
     if (!gpio_get_pin(SS_TSMS)) {
         // SS_TSMS should start high
@@ -175,7 +261,7 @@ static int initial_checks(void) {
         goto bail;
     }
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
 
     // Wait for IMD to stabilize
     _delay_ms(IMD_STABILITY_CHECK_DELAY_MS);
@@ -190,7 +276,7 @@ static int initial_checks(void) {
         air_control_critical.imd_status = true;
     }
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
 
 bail:
     return rc;
@@ -224,7 +310,7 @@ static void state_machine_run(void) {
             if (get_time() - start_time < 200) {
                 if (!air_control_critical.air_p_status) {
                     air_control_critical.air_state = AIR_STATE_PRECHARGE;
-                    can_send_air_control_critical();
+                    can_send_air_control_critical_alt();
                     once = true;
                 }
             } else {
@@ -377,7 +463,7 @@ static void state_machine_run(void) {
             }
         } break;
         case AIR_STATE_FAULT: {
-            gpio_set_pin(FAULT_LED);
+            // gpio_set_pin(FAULT_LED);
             gpio_clear_pin(PRECHARGE_CTL);
             gpio_clear_pin(AIR_N_LSD);
         } break;
@@ -388,11 +474,12 @@ static void state_machine_run(void) {
     }
 }
 
+
 int main(void) {
     can_init_air_control();
     timer_init(&timer0_cfg);
     timer_init(&timer1_cfg);
-    // updater_init(BTLDR_ID, 5);
+    updater_init(BTLDR_ID, 5);
 
     gpio_set_mode(PRECHARGE_CTL, OUTPUT);
     gpio_set_mode(AIR_N_LSD, OUTPUT);
@@ -428,13 +515,38 @@ int main(void) {
     sei();
     air_control_critical.air_state = AIR_STATE_INIT;
 
-    can_send_air_control_critical();
+    can_send_air_control_critical_alt();
+
+    // bool once_alt = true;
+    // bool once_alt2 = true;
+    // volatile uint32_t start_time;
+    // volatile uint32_t start_time2;
+    // while(1){
+    //   if (once_alt){
+    //     start_time = get_time();
+    //     once_alt = false;
+    //   }
+    //   if (once_alt2){
+    //     start_time2 = get_time();
+    //     once_alt2 = false;
+    //   }
+    //   if (get_time() - start_time > 10){
+    //     // gpio_toggle_pin(GENERAL_LED);
+    //     can_send_air_control_critical_alt();
+    //     once_alt = true;
+    //   }
+    //   if (get_time() - start_time2 > 5000){
+    //     gpio_toggle_pin(GENERAL_LED);
+    //     can_init_air_control();
+    //     once_alt2 = true;
+    //   }
+    // }
 
     // set_charger_connected();
 
-    // can_send_air_control_critical();
+    // can_send_air_control_critical_alt();
 
-    gpio_set_pin(GENERAL_LED);
+    // gpio_set_pin(GENERAL_LED);
 
     pcint0_callback();
     pcint1_callback();
@@ -445,48 +557,49 @@ int main(void) {
     }
 
     // Clear general LED to indicate that initialization has completed
-    gpio_clear_pin(GENERAL_LED);
+    // gpio_clear_pin(GENERAL_LED);
 
     // Get initial states of pins
     pcint0_callback();
     pcint1_callback();
     pcint2_callback();
 
-    can_send_air_control_critical();
-    gpio_clear_pin(GENERAL_LED);
+    can_send_air_control_critical_alt();
+    // gpio_clear_pin(GENERAL_LED);
 
     air_control_critical.air_state = AIR_STATE_IDLE;
 
     while (1) {
         if (run_1ms) {
             state_machine_run();
-            // can_send_air_control_critical();
+            
+            // can_send_air_control_critical_alt();
             run_1ms = false;
         }
 
         // // Updates can only occur when the AIR control state machine is in IDLE
         // if (air_control_critical.air_state == AIR_STATE_IDLE) {
-        //     updater_loop();
+            updater_loop();
         // }
 
         if (send_can) {
-            can_send_air_control_critical();
+            can_send_air_control_critical_alt();
             send_can = false;
         }
     }
 
 fault:
-    gpio_set_pin(FAULT_LED);
+    // gpio_set_pin(FAULT_LED);
 
     while (1) {
         // Allow updates in the event of a fault
-        // updater_loop();
+        updater_loop();
 
         /*
          * Continue senging CAN messages
          */
         if (send_can) {
-            can_send_air_control_critical();
+            can_send_air_control_critical_alt();
             send_can = false;
         }
     };

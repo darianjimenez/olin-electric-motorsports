@@ -5,6 +5,15 @@
 #include "libs/can/mob.h"
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include "libs/gpio/api.h"
+#include "libs/gpio/pin_defs.h"
+#include "libs/timer/api.h"
+// #include <avr/iom16m1.h>
+// #include "vehicle/mkvi/software/air_control/air_config.h"
+
+// extern gpio_t GENERAL_LED;
+gpio_t LED = PD6;
+volatile uint32_t start_time;
 
 __attribute__((weak)) void can_isr(void) {};
 
@@ -104,9 +113,18 @@ int can_send(can_frame_t* frame) {
 
     // Wait for TX to finish
     while (!(CANSTMOB & (1 << TXOK)))
-        ;
+        // gpio_set_pin(LED);
+        // static bool once = true;
+        // if (once) {
+          // start_time = get_time();
+          // once = false;
+        // }
+        // if (get_time() - start_time < 1000) {
+          // return 1;
+        // }
     CANSTMOB &= ~(1 << TXOK);
 
+    gpio_clear_pin(LED);
     return 0;
 }
 

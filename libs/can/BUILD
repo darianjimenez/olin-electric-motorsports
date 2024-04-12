@@ -24,6 +24,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":hdrs",
+        "//libs/gpio",
+        "//libs/timer"
     ],
 )
 
