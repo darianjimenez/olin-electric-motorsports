@@ -83,13 +83,13 @@ void pcint1_callback(void) {
     air_control_critical.air_n_status = !!gpio_get_pin(AIR_N_WELD_DETECT);
 }
 
-// void pcint2_callback(void) {
-//     air_control_critical.imd_status = true;
+void pcint2_callback(void) {
+    air_control_critical.imd_status = true;
 
-//     if (!air_control_critical.imd_status) {
-//         // set_fault(AIR_FAULT_IMD_STATUS);
-//     }
-// }
+    if (!air_control_critical.imd_status) {
+        // set_fault(AIR_FAULT_IMD_STATUS);
+    }
+}
 
 /*
  * Run through initial checks to ensure safe operation. Checks are:
@@ -168,7 +168,7 @@ static int initial_checks(void) {
 
     can_send_air_control_critical();
 
-    if(tractive_sys == MOTOR_CONTROLLER) {
+    if (tractive_sys == MOTOR_CONTROLLER) {
         if (!gpio_get_pin(SS_TSMS)) {
             // SS_TSMS should start high
             air_control_critical.ss_tsms = true;
@@ -179,7 +179,6 @@ static int initial_checks(void) {
     }
 
     can_send_air_control_critical();
-
 
     // Wait for IMD to stabilize
     _delay_ms(IMD_STABILITY_CHECK_DELAY_MS);
@@ -263,18 +262,17 @@ static void state_machine_run(void) {
             }
 
             if (get_time() - start_time >= PRECHARGE_DELAY_MS) {
-                    rc = get_tractive_voltage(&tractive_voltage, tractive_sys,
-                                              500); // 500ms
-                                                    // timeout
-                    if (rc != 0) {
-                        set_fault(AIR_FAULT_CAN_MC_TIMEOUT);
-                        once = true;
-                        return;
-                    }
+                rc = get_tractive_voltage(&tractive_voltage, tractive_sys,
+                                          500); // 500ms
+                                                // timeout
+                if (rc != 0) {
+                    set_fault(AIR_FAULT_CAN_MC_TIMEOUT);
+                    once = true;
+                    return;
+                }
 
-                    // Set correct scale for MC voltage
-                    tractive_voltage = tractive_voltage * 0.1;
-
+                // Set correct scale for MC voltage
+                tractive_voltage = tractive_voltage * 0.1;
 
                 if (tractive_voltage > (PRECHARGE_THRESHOLD * pack_voltage)) {
                     gpio_set_pin(AIR_N_LSD); // Close AIR negative

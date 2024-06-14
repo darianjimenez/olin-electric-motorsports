@@ -1,0 +1,1 @@
+python -m can.logger -f ~/can_logs/$(date +%Y%m%d_%H%M%S).log.gz -c vcan0 -b 500000 -i socketcan
